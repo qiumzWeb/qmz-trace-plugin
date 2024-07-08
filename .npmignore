@@ -1,0 +1,6 @@
+node_modules/
+tsc_package.js
+package-lock.json
+webpack.config.js
+tsconfig.json
+.gitignore
