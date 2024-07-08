@@ -39,40 +39,17 @@ import { getResult, getObjType } from 'qmz-utils';
 import { defaultUpTime, PVKey } from '../config';
 var PV = /** @class */ (function () {
     function PV(opt) {
-        var _this = this;
         this.options = {
             send: null,
             time: defaultUpTime,
-            uid: getUid(),
         };
         this.options = getObjType(opt) === 'Object' ? Object.assign(this.options, opt) : this.options;
-        this.onLoad(function () {
-            _this.options.uid = getUid();
-            _this.updateCounter();
-            _this.watchRouterChange();
-            if (typeof opt.send === 'function') {
-                _this.uploadCounter();
-            }
-        });
+        this.updateCounter();
+        this.watchRouterChange();
+        if (typeof opt.send === 'function') {
+            this.uploadCounter();
+        }
     }
-    PV.prototype.onLoad = function (callback) {
-        var timer;
-        function setTimeoutOnWindow() {
-            timer = setTimeout(callback);
-        }
-        ;
-        if (document.readyState === "complete") {
-            timer = setTimeout(callback);
-        }
-        else {
-            window.addEventListener("load", setTimeoutOnWindow);
-        }
-        return function () {
-            if (timer)
-                clearTimeout(timer);
-            window.removeEventListener("load", setTimeoutOnWindow);
-        };
-    };
     // 监听路由
     PV.prototype.watchRouterChange = function () {
         var _self = this;
@@ -115,7 +92,7 @@ var PV = /** @class */ (function () {
     // 上报访问量, 默认10S上报一次
     PV.prototype.uploadCounter = function () {
         var _this = this;
-        var _a = this.options, send = _a.send, uid = _a.uid, time = _a.time;
+        var _a = this.options, send = _a.send, time = _a.time;
         setTimer(function () { return __awaiter(_this, void 0, void 0, function () {
             var pv;
             return __generator(this, function (_a) {
@@ -125,7 +102,7 @@ var PV = /** @class */ (function () {
                         pv = _a.sent();
                         if (!(pv > 0)) return [3 /*break*/, 4];
                         // 接口上传
-                        return [4 /*yield*/, getResult(send, { uid: uid, pv: pv, traceType: 'pv' })];
+                        return [4 /*yield*/, getResult(send, { uid: getUid(), pv: pv, traceType: 'pv' })];
                     case 2:
                         // 接口上传
                         _a.sent();

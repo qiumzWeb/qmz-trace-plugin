@@ -5,49 +5,29 @@ import { ErrorType } from '../config';
 export default class TraceError {
   options = {
     send: null,
-    uid: null
   }
 
   constructor(opt:any) {
     this.options = getObjType(opt) === 'Object' ? Object.assign(this.options, opt) : this.options;
     // TODO
-    this.onLoad(() => {
-      this.options.uid = getUid();
       this.watchScriptError();
       this.watchFetchError();
       this.watchPromiseError();
       this.watchXHRError();
-    });
 
-  }
-  onLoad(callback:any) {
-    let timer:any;
-    function setTimeoutOnWindow() {
-      timer = setTimeout(callback);
-  };
-    if (document.readyState === "complete") {
-      timer = setTimeout(callback)
-    } else {
-      window.addEventListener("load", setTimeoutOnWindow);
-    }
-    return function() {
-      if (timer) clearTimeout(timer);
-      window.removeEventListener("load", setTimeoutOnWindow);
-    };
   }
 // 监听 资源 错误
   watchScriptError() {
     window.addEventListener('error', (e: any) => {
       const { message, filename, lineno, colno, error } = e;
-      const { uid } = this.options;
       getResult(this.options.send, {message: {
         filename, lineno, colno, error, message
-      }, uid, traceType: ErrorType.JS}).catch(err => console.log(err));
+      }, uid: getUid(), traceType: ErrorType.JS}).catch(err => console.log(err));
     }, true)
   }
 // 监听 Fetch 请求错误
   watchFetchError() {
-    const { uid, send } = this.options;
+    const { send } = this.options;
     window.fetch = new Proxy(window.fetch, {
       apply: function(target, thisArg, argumentsList) {
         return Reflect.apply(target, thisArg, argumentsList).then((response) => {
@@ -57,13 +37,13 @@ export default class TraceError {
               response.clone().text().then((message) => {
                 getResult(send, {message: {
                   status, statusText, url, message
-                }, uid, traceType: ErrorType.FETCH}).catch(err => console.log(err));
+                }, uid: getUid(), traceType: ErrorType.FETCH}).catch(err => console.log(err));
               })
             } catch(e) {console.log(e)}
           }
           return response;
         }).catch((error) => {
-          getResult(send, {message: error, uid, traceType: ErrorType.FETCH}).catch(err => console.log(err));
+          getResult(send, {message: error, uid: getUid(), traceType: ErrorType.FETCH}).catch(err => console.log(err));
           return Promise.reject(error);
         });
       }
@@ -71,7 +51,7 @@ export default class TraceError {
   }
 // 监听 XHR 请求错误
   watchXHRError() {
-    const { uid, send } = this.options;
+    const { send } = this.options;
     window.XMLHttpRequest.prototype.open = new Proxy(window.XMLHttpRequest.prototype.open, {
       apply: function(target, thisArg, argumentsList) {
         const xhr = thisArg;
@@ -82,7 +62,7 @@ export default class TraceError {
               if (xhr.readyState === XMLHttpRequest.DONE && xhr.status !== 200) {
                 getResult(send, {message: {
                     status: xhr.status, statusText: xhr.statusText, url: xhr.responseURL, message: xhr.responseText
-                }, uid, traceType: ErrorType.XHR}).catch(err => console.log(err));
+                }, uid: getUid(), traceType: ErrorType.XHR}).catch(err => console.log(err));
               }
             }, true)
             Reflect.apply(fn, cxt, args);
@@ -98,8 +78,7 @@ export default class TraceError {
     window.addEventListener('unhandledrejection', (e: any) => {
       const { reason } = e;
       const { message, stack } = reason;
-      const { uid } = this.options;
-      getResult(this.options.send, {message, stack, uid, traceType: ErrorType.PROMISE}).catch(err => console.log(err));
+      getResult(this.options.send, {message, stack, uid: getUid(), traceType: ErrorType.PROMISE}).catch(err => console.log(err));
     }, true)
   }
 

@@ -7,34 +7,15 @@ export default class PV {
   options = {
     send: null,
     time: defaultUpTime,
-    uid: getUid(),
   }
 
   constructor(opt:any) {
     this.options = getObjType(opt) === 'Object' ? Object.assign(this.options, opt) : this.options;
-    this.onLoad(() => {
-      this.options.uid = getUid();
-      this.updateCounter();
-      this.watchRouterChange();
-      if (typeof opt.send === 'function') {
-        this.uploadCounter()
-      }
-    })
-  }
-  onLoad(callback:any) {
-    let timer:any;
-    function setTimeoutOnWindow() {
-      timer = setTimeout(callback);
-  };
-    if (document.readyState === "complete") {
-      timer = setTimeout(callback)
-    } else {
-      window.addEventListener("load", setTimeoutOnWindow);
+    this.updateCounter();
+    this.watchRouterChange();
+    if (typeof opt.send === 'function') {
+      this.uploadCounter()
     }
-    return function() {
-      if (timer) clearTimeout(timer);
-      window.removeEventListener("load", setTimeoutOnWindow);
-    };
   }
   // 监听路由
   watchRouterChange() {
@@ -67,13 +48,13 @@ export default class PV {
 
   // 上报访问量, 默认10S上报一次
   uploadCounter() {
-    const { send, uid, time } = this.options;
+    const { send, time } = this.options;
 
     setTimer(async() => {
       const pv:any = await localStore.get(PVKey);
       if (pv > 0) {
         // 接口上传
-        await getResult(send, {uid, pv, traceType: 'pv'});
+        await getResult(send, {uid: getUid(), pv, traceType: 'pv'});
         await localStore.set(PVKey, 0)
       }
     }, {interval: isNaN(time) ? defaultUpTime : time})
