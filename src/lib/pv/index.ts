@@ -12,29 +12,47 @@ export default class PV {
 
   constructor(opt:any) {
     this.options = getObjType(opt) === 'Object' ? Object.assign(this.options, opt) : this.options;
-    this.updateCounter();
-    this.watchRouterChange();
-    if (typeof opt.send === 'function') {
-      this.uploadCounter()
-    }
+    this.onLoad(() => {
+      this.options.uid = getUid();
+      this.updateCounter();
+      this.watchRouterChange();
+      if (typeof opt.send === 'function') {
+        this.uploadCounter()
+      }
+    })
   }
-
+  onLoad(callback:any) {
+    let timer:any;
+    function setTimeoutOnWindow() {
+      timer = setTimeout(callback);
+  };
+    if (document.readyState === "complete") {
+      timer = setTimeout(callback)
+    } else {
+      window.addEventListener("load", setTimeoutOnWindow);
+    }
+    return function() {
+      if (timer) clearTimeout(timer);
+      window.removeEventListener("load", setTimeoutOnWindow);
+    };
+  }
   // 监听路由
   watchRouterChange() {
+    const _self = this;
     // 监听路由变化
     window.addEventListener('hashchange', this.updateCounter);
     window.addEventListener('popstate', this.updateCounter);
     window.history && typeof window.history.pushState === 'function' &&
     (window.history.pushState = new Proxy(window.history.pushState, {
       apply(fn, cxt, args) {
-        this.updateCounter();
+        _self.updateCounter();
         Reflect.apply(fn, cxt, args)
       }
     }));
     window.history && typeof window.history.replaceState === 'function' &&
     (window.history.replaceState = new Proxy(window.history.replaceState, {
       apply(fn, cxt, args) {
-        this.updateCounter();
+        _self.updateCounter();
         Reflect.apply(fn, cxt, args)
       }
     }));

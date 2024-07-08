@@ -1,6 +1,6 @@
 {
   "name": "qmz-trace-plugin",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "qmz-trace-plugin",
   "main": "./dist/index.js",
   "author": {

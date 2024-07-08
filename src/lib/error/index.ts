@@ -5,16 +5,35 @@ import { ErrorType } from '../config';
 export default class TraceError {
   options = {
     send: null,
-    uid: getUid()
+    uid: null
   }
 
   constructor(opt:any) {
     this.options = getObjType(opt) === 'Object' ? Object.assign(this.options, opt) : this.options;
     // TODO
-    this.watchScriptError();
-    this.watchFetchError();
-    this.watchPromiseError();
-    this.watchXHRError();
+    this.onLoad(() => {
+      this.options.uid = getUid();
+      this.watchScriptError();
+      this.watchFetchError();
+      this.watchPromiseError();
+      this.watchXHRError();
+    });
+
+  }
+  onLoad(callback:any) {
+    let timer:any;
+    function setTimeoutOnWindow() {
+      timer = setTimeout(callback);
+  };
+    if (document.readyState === "complete") {
+      timer = setTimeout(callback)
+    } else {
+      window.addEventListener("load", setTimeoutOnWindow);
+    }
+    return function() {
+      if (timer) clearTimeout(timer);
+      window.removeEventListener("load", setTimeoutOnWindow);
+    };
   }
 // 监听 资源 错误
   watchScriptError() {

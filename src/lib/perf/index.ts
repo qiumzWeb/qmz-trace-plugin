@@ -45,8 +45,8 @@ export default class TracePerf {
 
   // 如果初始化插件时页面已经onload，直接获取performance并发送
   // 如果初始化插件时页面还没有onload，则等页面onload时再获取performance并发送
-  onLoad(callback) {
-    let timer;
+  onLoad(callback:any) {
+    let timer:any;
     function setTimeoutOnWindow() {
       timer = setTimeout(callback);
   };
